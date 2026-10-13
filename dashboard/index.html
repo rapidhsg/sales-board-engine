@@ -625,14 +625,28 @@ function problems(c) {
     const why = c.blocked[rep];   // lane and other non-hours reasons still come from the engine
     if (why && !/home by|earliest|last appointment|off that day|another appointment/.test(why)) out.push(why);
   }
-  const same = dayCards(rep, k);
-  if (r && !c.visit && same.filter(o => !o.visit).length > r.limits.per_day) out.push(`${same.length} appointments that day, limit is ${r.limits.per_day}`);
-  for (const o of same) if (o.id !== c.id && !(c.fixed && o.fixed) && Math.abs(mins(o.appt) - mins(c.appt)) < (B.appointment?.min_gap_minutes || 120)) { out.push(`Within 2 hours of his ${hm(o.appt)}`); break; }
-  const wc = weekCount(rep, monday(k));
-  if (r && !c.visit && !c.fixed && wc > r.limits.week_cap) out.push(`${wc} this week, cap is ${r.limits.week_cap}`);
+  const same = dayCards(rep, k), sits = same.filter(o => !o.visit);
+  if (r && !c.visit && sits.length > r.limits.per_day && sits.indexOf(c) >= r.limits.per_day) out.push(`${ordinal(sits.indexOf(c) + 1)} appointment that day, limit is ${r.limits.per_day}`);   // only the one(s) over the limit
+  for (const o of same) {
+    if (o.id === c.id || (c.fixed && o.fixed)) continue;
+    const dt = Math.abs(mins(o.appt) - mins(c.appt));
+    if (dt < (B.appointment?.min_gap_minutes || 120)) { out.push(`Within 2 hours of his ${hm(o.appt)}`); break; }
+    const a = center(c.zip), b = center(o.zip);
+    if (a && b && dt <= 240) {   // back to back: is there time to drive between them?
+      const mi = miles(a, b) / 1.25, need = mi / (B.appointment?.drive_mph || 30) * 60;
+      if (dt - (B.appointment?.minutes || 90) < need) { out.push(`Not enough time to drive from his ${hm(o.appt)} (${Math.round(mi)} mi)`); break; }
+    }
+  }
+  if (r && !c.visit && !c.fixed && c.lane !== "specialty") {   // over the weekly cap: flag only the appointments past it, not all of them
+    const wk = monday(k), before = wk === monday(B.meta.run.slice(0, 10)) ? r.this_week || 0 : 0;
+    const wkCards = B.cards.filter(o => repOf(o) === rep && monday(dkey(o.appt)) === wk && o.lane !== "specialty" && !o.visit).sort((a, b) => a.appt.localeCompare(b.appt));
+    const n = before + wkCards.indexOf(c) + 1;
+    if (n > r.limits.week_cap) out.push(`${ordinal(n)} this week, cap is ${r.limits.week_cap}`);
+  }
   return out;
 }
 
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th"));
 /* ---------- shared: tabs, days, summary ---------- */
 function renderTop() {
   $$(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
@@ -689,8 +703,19 @@ function renderTop() {
         <em>${Math.abs(cost) < 50 ? "Full team, plan followed" : `Days off <b>${sgn(offT)}</b> · Moves <b>${sgn(T.moveCost)}</b>`}</em></div>
       <div><small>${dayName}</small><b class="n ${dcost >= 50 ? "r" : dcost <= -50 ? "g" : ""}">${Math.abs(dcost) < 50 ? "$0" : sgn(dcost)}</b><em>${Math.abs(dcost) < 50 ? "full team" : `days off ${sgn(offD)} · moves ${sgn(D.moveCost)}`}</em></div></div></div>`;
 }
+let renderLater = false;
+function renderRemote() {   // someone else changed something: don't yank a list he's picking from
+  if (document.activeElement && document.activeElement.matches && document.activeElement.matches("select[data-move]")) { renderLater = true; return; }
+  render();
+}
 function render() {
   if (!B) return;
+  const open = new Set([...document.querySelectorAll(".card details[open]")].map(d => d.closest(".card")?.dataset.id));
+  render2();
+  open.forEach(id => { const d = document.querySelector(`#c-${id} details`); if (d) d.open = true; });   // keep what he had open
+}
+document.addEventListener("focusout", e => { if (renderLater && e.target.matches && e.target.matches("select[data-move]")) { renderLater = false; setTimeout(render, 0); } });
+function render2() {
   computeEff();
   renderTop();
   if (tab === "board") renderBoard();
@@ -778,7 +803,7 @@ function card(c) {
   const opts = [`<option value="">Move to…</option>`].concat(rep ? [`<option value="__none__">Needs a call</option>`] : []).concat(B.reps.filter(r => r.name !== rep).map(r =>
     `<option value="${esc(r.name)}">${esc(r.short)} · ${pct(c.odds[r.name]?.close)}${c.blocked[r.name] ? " (breaks a rule)" : ""}</option>`)).join("");
   const showLift = !isMoved && ef.kind !== "replan" && c.lift != null && c.lift >= .01;
-  return `<article class="card${conflictIds(dkey(c.appt)).has(c.id) ? " conflict" : ""}${isMoved || ef.kind === "replan" ? " moved" : ""}${pr.length || c.needs_ok ? " flag" : ""}${m.set ? " done" : ""}${openPin === c.id ? " hl" : ""}" data-id="${c.id}" id="c-${c.id}">
+  return `<article class="card${isPast(c) ? " past" : ""}${conflictIds(dkey(c.appt)).has(c.id) ? " conflict" : ""}${isMoved || ef.kind === "replan" ? " moved" : ""}${pr.length || c.needs_ok ? " flag" : ""}${m.set ? " done" : ""}${openPin === c.id ? " hl" : ""}" data-id="${c.id}" id="c-${c.id}">
     <div class="eyebrow"><span>${esc(where)}</span><time datetime="${esc(c.appt)}">${hm(c.appt)}</time></div>
     <div class="who">${esc(c.name || "Customer")}</div>
     <div class="odds"><b class="n${o && o.close >= .35 && !c.visit ? " hi" : ""}">${c.visit ? "Visit" : c.sold != null ? "Sold" : o ? pct(o.close) : "–"}</b>${showLift ? `<span class="lift n" title="Points above the next best rep who is free">+${Math.round(c.lift * 100)}</span>` : ""}<small title="Expected sale value: close chance times the average ticket for this kind of job">${o ? money(val(c, rep)) : ""}</small></div>
@@ -795,7 +820,7 @@ function card(c) {
         ${c.notes ? `<div class="sec"><h3>Lead notes</h3><p>${esc(c.notes)}</p></div>` : ""}
         ${c.more_notes ? `<div class="sec"><h3>More notes</h3><p>${esc(c.more_notes)}</p></div>` : ""}
         <div class="sec"><h3>Lead</h3><p>${esc([src, c.hot, c.set_by && "set by " + c.set_by, c.days_out != null && (c.days_out === 0 ? "booked same day" : c.days_out + " days from lead to appointment")].filter(Boolean).join(" · "))}</p></div>
-        <div class="act"><select aria-label="Move this appointment" data-move="${c.id}">${opts}</select>
+        <div class="act"><select aria-label="Move this appointment" data-move="${c.id}"${isPast(c) ? " disabled title=\"Already happened\"" : ""}>${opts}</select>
           ${isMoved ? `<button class="btn" data-undo="${c.id}">Back to ${esc(short(c.pick))}</button>` : ""}
           <a class="btn dark" href="${esc(c.url)}" target="_blank" rel="noopener">Open in AccuLynx</a></div>
       </details>
@@ -1396,13 +1421,15 @@ function wireBoard() {
   $$("[data-undo]").forEach(b => b.onclick = () => move(b.dataset.undo, null, true));
   $$("[data-set]").forEach(b => b.onchange = () => save(b.dataset.set, { set: b.checked }));
   if (window.Sortable) $$(".list").forEach(el => Sortable.create(el, {
-    group: "board", draggable: ".card", filter: "details,select,a,button,input,label", preventOnFilter: false,
+    group: "board", draggable: ".card", filter: "details,select,a,button,input,label,.past", preventOnFilter: false,
     animation: 120, delay: 160, delayOnTouchOnly: true, scroll: true, bubbleScroll: true,
     onEnd: e => { const id = e.item.dataset.id; const to = e.to.dataset.rep || ""; if (e.from !== e.to) move(id, to); else render(); }
   }));
 }
+const isPast = c => dkey(c.appt) < todayKey() || (dkey(c.appt) === todayKey() && mins(c.appt) < nowMin());
 function move(id, to, undo) {
   const c = B.cards.find(x => x.id === id); if (!c) return;
+  if (isPast(c)) { toast("That appointment already happened, so it stays put"); render(); return; }
   const k = dkey(c.appt), sameDay = o => o.id !== id && dkey(o.appt) === k;
   const cf = conflictIds(k);
   if (cf.size && !cf.has(id)) { toast("Board locked: fix the time conflict first"); render(); return; }
@@ -1766,14 +1793,14 @@ async function connect() {
     if (userApi && ids.size) { try { const ps = await userApi.profiles([...ids]); for (const k in next) if (next[k].by && ps[next[k].by]) next[k].byName = ps[next[k].by].name || ""; } catch (e) {} }
     if (my !== snapSeq) return;   // a newer snapshot already came in
     for (const [id, p] of Object.entries(pending)) { if (p.v === null) delete next[id]; else next[id] = { ...p.v }; }   // our own writes still in flight win
-    moves = next; if (tab !== "reps") render();
+    moves = next; if (tab !== "reps") renderRemote();
   }, () => banner("Lost the connection to saved moves. Refresh to try again."));
   db.collection("roster").onSnapshot(snap => {
     if (snap.empty) { roster = null; return; }
     const r = {}; snap.docs.forEach(d => { const v = d.data() || {}; if (d.id === "settings-availability") { if (v.sat_reps) satReps = v.sat_reps; } else if (v.name) r[v.name] = v; });
     roster = r;
     for (const rep of B.reps) { const v = r[rep.name]; if (v) { rep.week = v.week || rep.week; rep.days_off = v.days_off || []; rep.days_on = v.days_on || []; rep.eve_off = v.eve_off || []; rep.eve_on = v.eve_on || []; rep.avail_set = v.avail_set || []; if (v.display) rep.display = v.display; } }
-    render();
+    renderRemote();
   }, () => {});
 }
 async function load() {
@@ -1784,6 +1811,7 @@ async function load() {
   $("#f-data").textContent = `AccuLynx job export, ${B.meta.sits_used.toLocaleString()} past sits learned from`;
   render();
   connect();
+  loadZips().then(() => render());   // zip centers: drive-time warnings on the board
 }
 load();
 })();
