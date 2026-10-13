@@ -92,6 +92,15 @@ def board_holds():
     b = b[b.snap_date == b.snap_date.max()]
     return {r.guid: (r.board_rep or None) for r in b.itertuples() if r.moved == "True"}   # None = pulled to Needs a call
 
+def board_pins():
+    """Cards on the board's latest snapshot that were only held in place (not moved by the manager)."""
+    p = E.MEM / "board_moves.csv"
+    if not p.exists(): return set()
+    b = pd.read_csv(p, dtype=str).fillna("")
+    if b.empty or "held_only" not in b: return set()
+    b = b[b.snap_date == b.snap_date.max()]
+    return {r.guid for r in b.itertuples() if r.held_only == "True"}
+
 def past_reps(df, guids, reps, today):
     """{guid: (rep, job number, sold)} for customers a board rep has met in person before: same name (and same zip when we
     have it), an appointment before today that was a real sit. The rep who sold him last wins, else the rep who sat with him last.
@@ -227,7 +236,7 @@ def plan(scores, df, today, now=None):
     leads["same_day"] = leads.days_lead_to_appt.eq(0)
     leads["week"] = leads.day - pd.to_timedelta(leads.day.dt.dayofweek, unit="D")
     office = RULES["office"]
-    bh = board_holds()   # cards the manager moved or held on the board: keep them where he put them unless a rule says no
+    bh = board_holds(); pins = board_pins()   # cards the manager moved or held on the board: keep them where he put them unless a rule says no
     held = {g: r for g, r in bh.items() if r}
     pulled = {g for g, r in bh.items() if not r}   # the manager pulled these to Needs a call: leave them there
     sp_all = df.dropna(subset=["guid"]).drop_duplicates("guid").set_index("guid")["Primary Salesperson"]
@@ -237,11 +246,14 @@ def plan(scores, df, today, now=None):
     #   visit   = not a sales sit (call back, service, testimonial...)   started = today's appointment that already started
     #   placed  = commercial job the manager gave a rep in AccuLynx
     #   held    = on a day the manager arranged on the board (his moves, and every card he left where it was)
+    #   acx     = the rep is already set in AccuLynx (the sales manager assigns there); a move on the board still wins
     fixed = {}
     for l in leads.itertuples():
         r = acx.get(l.guid)
         if l.guid in vis: fixed[l.guid] = (r, "visit")
-        elif held.get(l.guid) in reps: fixed[l.guid] = (held[l.guid], "held")   # the manager arranged this day by hand: never move it
+        elif held.get(l.guid) in reps and l.guid not in pins: fixed[l.guid] = (held[l.guid], "held")   # the manager moved this card on the board
+        elif r in reps: fixed[l.guid] = (r, "acx")   # the sales manager already set the rep in AccuLynx: that's his call
+        elif held.get(l.guid) in reps: fixed[l.guid] = (held[l.guid], "held")   # left in place on a day he arranged by hand
         elif now is not None and l.when < pd.Timestamp(now) and r: fixed[l.guid] = (r, "started")
         elif l.comm and r: fixed[l.guid] = (r, "placed")
     busy, fix_sits = {}, {}   # (rep, day) -> [(minute, zip, guid)] ; (rep, day) -> sales sits already fixed that day

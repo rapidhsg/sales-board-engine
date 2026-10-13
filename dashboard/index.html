@@ -535,7 +535,7 @@ function computeEff() {
   const redo = {};
   for (const c of B.cards) {
     const m = moves[c.id];
-    if (m && m.rep !== undefined && (!m.pin || dayLocked(dkey(c.appt)))) { EFF[c.id] = { rep: m.rep, kind: m.pin ? "pinned" : "moved", from: c.pick }; continue; }   // holds only count while the day has a real move
+    if (m && m.rep !== undefined && (!m.pin || dayLocked(dkey(c.appt))) && !(m.pin && c.set_acx)) {   // a rep set in AccuLynx beats a card that was only held in place EFF[c.id] = { rep: m.rep, kind: m.pin ? "pinned" : "moved", from: c.pick }; continue; }   // holds only count while the day has a real move
     const k = dkey(c.appt);
     if (c.fixed || !changed.has(k) || dayLocked(k)) { EFF[c.id] = { rep: c.pick, kind: "engine" }; continue; }   // fixed = already happened, not a sale, or placed in AccuLynx   // a day the manager has started arranging is never reshuffled
     (redo[k] = redo[k] || []).push(c);   // who's working changed since the engine ran: re-plan this whole day
