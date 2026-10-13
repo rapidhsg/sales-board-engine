@@ -120,6 +120,9 @@ table.wk thead small.bad{color:var(--bad);font-weight:700}
 ul.rules{margin:8px 0 0;padding-left:18px}
 ul.rules li{margin:2px 0}
 .tag6{background:var(--red);color:var(--white);border-radius:3px;padding:0 5px;font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.04em;margin-left:6px}
+.lockbar{background:var(--black);border:3px solid var(--red)}
+.card.conflict{outline:3px solid var(--red);outline-offset:1px;background:#FFF0EE}
+.chip.cf{background:var(--red);color:#fff}
 .needbar{background:var(--red);color:#fff;border-radius:var(--r);padding:10px 14px;margin:0 0 12px;display:grid;gap:6px}
 .needbar h3{margin:0;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.05em;text-transform:uppercase;display:flex;justify-content:space-between;gap:10px;align-items:center}
 .needbar p{margin:0;font-size:13.5px;line-height:1.45}
@@ -411,6 +414,7 @@ details[open]>summary::after{content:"–"}
     <div class="ideas guide" id="guide" aria-live="polite" hidden></div>
     <button class="fold ideasf" id="ideasfold" aria-expanded="false" aria-controls="ideas" hidden><b>Ideas to add revenue</b><span class="fline" id="ideasline"></span><i class="chev" aria-hidden="true">▾</i></button>
     <div class="ideas" id="ideas" aria-live="polite" hidden></div>
+    <div class="needbar lockbar" id="conflictbar" role="alert" hidden></div>
     <div class="needbar" id="needbar" role="alert" hidden></div>
     <div class="avail" id="avail" role="group" aria-label="Who is working this day"></div>
     <div class="ideas sugbox" id="sugbox" hidden></div>
@@ -709,7 +713,7 @@ function renderBoard() {
     (offR.length ? `<span class="offlist">Off: ${offR.map(r => esc(r.short)).join(", ")}</span>` : "") +
     `<button class="btn ghost" id="go-avail" title="Change who works and who runs 6 PMs">Edit availability</button>` +
     `${dayLocked(day) ? `<button class="btn dark" id="suggest-day" title="This day is held as you arranged it. See what the engine would change.">Suggest changes</button>` : ""}<button class="btn red" id="copy-plan" title="Copies the whole plan for this day, what needs a rep, and the call center guide">Copy plan</button>` + resetUi();
-  renderNeedBar(); renderSugBox();
+  renderConflictBar(); renderNeedBar(); renderSugBox();
   const wk = monday(day);
   const na = today.filter(c => !repOf(c)).sort((a, b) => a.appt.localeCompare(b.appt));
   const cols = [`<section class="col na${na.length ? "" : " slim"}" aria-label="Needs a call"><div class="ch"><div class="ch-row"><h2>Needs a call</h2></div>
@@ -750,6 +754,7 @@ function card(c) {
   const src = [c.parent, c.source].filter(Boolean).join(" · ");
   // at most two tags on the card face, most important first; the rest live in Details
   const tags = [];
+  if (conflictIds(dkey(c.appt)).has(c.id)) tags.push('<span class="chip cf">Time conflict</span>');
   if (c.visit) tags.push('<span class="chip blk" title="Call back, service, upgrade or video. Takes his time, not counted as a sale.">Not a sale</span>');
   if (c.offboard) tags.push(`<span class="chip blk">With ${esc(short(c.offboard))}</span>`);
   if (c.needs_ok) tags.push(`<span class="chip red">Needs Richie's OK</span>`);
@@ -773,7 +778,7 @@ function card(c) {
   const opts = [`<option value="">Move to…</option>`].concat(rep ? [`<option value="__none__">Needs a call</option>`] : []).concat(B.reps.filter(r => r.name !== rep).map(r =>
     `<option value="${esc(r.name)}">${esc(r.short)} · ${pct(c.odds[r.name]?.close)}${c.blocked[r.name] ? " (breaks a rule)" : ""}</option>`)).join("");
   const showLift = !isMoved && ef.kind !== "replan" && c.lift != null && c.lift >= .01;
-  return `<article class="card${isMoved || ef.kind === "replan" ? " moved" : ""}${pr.length || c.needs_ok ? " flag" : ""}${m.set ? " done" : ""}${openPin === c.id ? " hl" : ""}" data-id="${c.id}" id="c-${c.id}">
+  return `<article class="card${conflictIds(dkey(c.appt)).has(c.id) ? " conflict" : ""}${isMoved || ef.kind === "replan" ? " moved" : ""}${pr.length || c.needs_ok ? " flag" : ""}${m.set ? " done" : ""}${openPin === c.id ? " hl" : ""}" data-id="${c.id}" id="c-${c.id}">
     <div class="eyebrow"><span>${esc(where)}</span><time datetime="${esc(c.appt)}">${hm(c.appt)}</time></div>
     <div class="who">${esc(c.name || "Customer")}</div>
     <div class="odds"><b class="n${o && o.close >= .35 && !c.visit ? " hi" : ""}">${c.visit ? "Visit" : c.sold != null ? "Sold" : o ? pct(o.close) : "–"}</b>${showLift ? `<span class="lift n" title="Points above the next best rep who is free">+${Math.round(c.lift * 100)}</span>` : ""}<small title="Expected sale value: close chance times the average ticket for this kind of job">${o ? money(val(c, rep)) : ""}</small></div>
@@ -1090,6 +1095,27 @@ function fixFor(c, k) {
   }
   return { r: who[0], text: who[0] ? `${who[0].short} is the top closer for it but has no room this day. Call to offer another day.` : "Nobody working this day can run it. Call to offer another day." };
 }
+function conflicts(k) {   // two cards on one rep less than the gap apart, where the manager put at least one of them there
+  const out = [];
+  for (const r of B.reps) {
+    const mine = dayCards(r.name, k);
+    for (let a = 0; a < mine.length; a++) for (let b = a + 1; b < mine.length; b++) {
+      const x = mine[a], y = mine[b];
+      if (Math.abs(mins(x.appt) - mins(y.appt)) >= GAP()) continue;
+      if (!realMove(x.id) && !realMove(y.id)) continue;   // the engine's own plan never does this; only a hand move can
+      out.push({ r, a: x, b: y });
+    }
+  }
+  return out;
+}
+const conflictIds = k => new Set(conflicts(k).flatMap(x => [x.a.id, x.b.id]));
+function renderConflictBar() {
+  const el = $("#conflictbar"); const list = conflicts(day);
+  el.hidden = !list.length; if (!list.length) return;
+  el.innerHTML = `<h3><span>Board locked · time conflict · ${dayLbl(day)}</span></h3>` +
+    list.map(x => `<p><b>${esc(x.r.short)}</b> has <b>${esc(x.a.name || "Homeowner")}</b> at ${hm(x.a.appt)} and <b>${esc(x.b.name || "Homeowner")}</b> at ${hm(x.b.appt)}. Move one of them to another rep, or undo the move.</p>`).join("") +
+    `<p>Until this is fixed, only these cards can be moved and the plan can't be copied.</p>`;
+}
 function renderNeedBar() {
   const el = $("#needbar"); const list = B.cards.filter(c => dkey(c.appt) === day && !repOf(c)).sort((a, b) => a.appt.localeCompare(b.appt));
   el.hidden = !list.length; if (!list.length) return;
@@ -1358,8 +1384,9 @@ async function toggleOff(name, k, working) {
 function wireBoard() {
   const ga = $("#go-avail"); if (ga) ga.onclick = () => { const k = monday(day), t = monday(todayKey()); weekOff = Math.max(0, Math.round((parse(k) - parse(t)) / 6048e5)); tab = "week"; setTab(); };
   const sd = $("#suggest-day"); if (sd) sd.onclick = () => { sugDay = sugDay === day ? null : day; renderSugBox(); };
-  const cp = $("#copy-plan"); if (cp) cp.onclick = () => copyText(planText(day), "Plan copied. Paste it anywhere.");
-  const cp2 = $("#needbar-copy"); if (cp2) cp2.onclick = () => copyText(planText(day), "Plan copied. Paste it anywhere.");
+  const copyPlan = () => conflicts(day).length ? toast("Fix the time conflict before copying the plan") : copyText(planText(day), "Plan copied. Paste it anywhere.");
+  const cp = $("#copy-plan"); if (cp) cp.onclick = copyPlan;
+  const cp2 = $("#needbar-copy"); if (cp2) cp2.onclick = copyPlan;
   $$(".meterwrap").forEach(el => el.onclick = e => { e.stopPropagation(); const o = el.classList.contains("open"); $$(".meterwrap.open").forEach(x => x.classList.remove("open")); if (!o) el.classList.add("open"); });
   $$("[data-avail]").forEach(el => el.onchange = () => toggleOff(el.dataset.avail, day, el.checked));
   $$("[data-reset]").forEach(el => el.onclick = () => { resetAsk = el.dataset.reset; render(); });
@@ -1377,6 +1404,8 @@ function wireBoard() {
 function move(id, to, undo) {
   const c = B.cards.find(x => x.id === id); if (!c) return;
   const k = dkey(c.appt), sameDay = o => o.id !== id && dkey(o.appt) === k;
+  const cf = conflictIds(k);
+  if (cf.size && !cf.has(id)) { toast("Board locked: fix the time conflict first"); render(); return; }
   const target = undo ? c.pick : (to || null);
   if (!undo && target === repOf(c)) { render(); return; }   // dropped back where it was: nothing changed, so nothing gets held
   const ids = [];

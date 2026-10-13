@@ -233,10 +233,12 @@ def plan(scores, df, today, now=None):
     # fixed cards: not up to the engine. They stay with the rep AccuLynx has and take his time before anything else is planned.
     #   visit   = not a sales sit (call back, service, testimonial...)   started = today's appointment that already started
     #   placed  = commercial job the manager gave a rep in AccuLynx
+    #   held    = on a day the manager arranged on the board (his moves, and every card he left where it was)
     fixed = {}
     for l in leads.itertuples():
         r = acx.get(l.guid)
         if l.guid in vis: fixed[l.guid] = (r, "visit")
+        elif held.get(l.guid) in reps: fixed[l.guid] = (held[l.guid], "held")   # the manager arranged this day by hand: never move it
         elif now is not None and l.when < pd.Timestamp(now) and r: fixed[l.guid] = (r, "started")
         elif l.comm and r: fixed[l.guid] = (r, "placed")
     busy, fix_sits = {}, {}   # (rep, day) -> [(minute, zip, guid)] ; (rep, day) -> sales sits already fixed that day
@@ -377,6 +379,7 @@ def plan(scores, df, today, now=None):
                 cl, sd = (0.0, 0.0) if kind == "visit" or v is None else (round(v.close, 3), round(v.same_day, 3))
                 note = f"{VISIT}. Stays with {r} as set in AccuLynx and blocks his time." if kind == "visit" else \
                        f"Commercial, placed with {r} in AccuLynx." if kind == "placed" else None
+                if kind == "held" and v is not None: cl, sd = round(v.close, 3), round(v.same_day, 3)
                 out.append(dict(guid=l.guid, appt=l.appt, arm=arm_for(l.day), rep=r, rating=st[r]["rating"], close=cl, same_day=sd, bends=[], needs_ok=False,
                                 note=note, options=[], blocked={}, back=back_info(rc), fixed=kind))
             else:

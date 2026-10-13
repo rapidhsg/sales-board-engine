@@ -22,7 +22,7 @@ def main(path, out):
         r = p.get("rep")
         if not r: continue
         if p.get("fixed"):   # started, not-a-sale or placed: must stay with the rep AccuLynx has, and isn't the engine's choice
-            if sp.get(p["guid"]) != r: bad.append(f"fixed card moved off its AccuLynx rep {p['appt']}")
+            if p["fixed"] != "held" and sp.get(p["guid"]) != r: bad.append(f"fixed card moved off its AccuLynx rep {p['appt']}")
             w = pd.Timestamp(p["appt"]); fixed_at[(r, w.strftime("%Y-%m-%d"))].append(w.hour * 60 + w.minute)
             continue
         L = lead[p["guid"]]; when = pd.Timestamp(p["appt"]); day = when.strftime("%Y-%m-%d"); m = when.hour * 60 + when.minute

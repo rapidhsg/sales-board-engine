@@ -75,7 +75,7 @@ def main(out, path, status=None):
             pick=pick, close=p.get("close"), same_day=p.get("same_day"),
             lift=round(p["close"] - max(free), 4) if pick and free else None,
             needs_ok=bool(p.get("needs_ok")), bends=p.get("bends") or [], note=p.get("note"), back=p.get("back"),
-            fixed=p.get("fixed"), visit=p.get("fixed") == "visit", offboard=p.get("offboard"), pulled=bool(p.get("pulled")),
+            fixed=p.get("fixed") if p.get("fixed") != "held" else None, held=p.get("fixed") == "held", visit=p.get("fixed") == "visit", offboard=p.get("offboard"), pulled=bool(p.get("pulled")),
             blocked=p.get("blocked") or {}, odds=odds,
             up=[label(u[0]) for u in why.get("up", [])][:3], down=[label(d[0]) for d in why.get("down", [])][:3]))
     # nobody fits inside the rules, but the manager already gave it to a rep in AccuLynx: show it in his column, flagged with the rule it breaks
