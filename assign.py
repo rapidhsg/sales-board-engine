@@ -121,7 +121,10 @@ def visits(df):
     """Jobs whose appointment is not a sales sit: call backs, service, upsell / change order, warranty, testimonial shoots.
     They still take the rep's time."""
     notes = df[["INITIAL LEAD NOTES", "ADDITIONAL LEAD NOTES"]].fillna("").agg(" ".join, axis=1).str.lower()
-    m = df["_cb"] | df["_wt"].isin(list(rr.WT["contacts_leads_appointments_exclude"]) + ["Warranty"]) | notes.str.contains(NON_SALE_NOTES)
+    ia = df["Initial Appointment Date"]
+    sold_on_visit = ia.notna() & (df["Approved Milestone Date"].dt.normalize() == ia.dt.normalize())   # sold at this very appointment: that was a sale
+    post_sale = df["Current Milestone"].isin(["Approved", "Completed", "Invoiced", "Closed"]) & ~sold_on_visit   # already sold before: a return visit
+    m = df["_cb"] | df["_wt"].isin(list(rr.WT["contacts_leads_appointments_exclude"]) + ["Warranty"]) | notes.str.contains(NON_SALE_NOTES) | post_sale
     return set(df.loc[m, "guid"].dropna())
 
 def ordinal(n): return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
