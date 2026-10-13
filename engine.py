@@ -16,7 +16,13 @@ from scipy import sparse
 from sklearn.linear_model import LogisticRegression
 
 HERE = Path(__file__).parent
-sys.path.insert(0, str(HERE.parent / "rules"))
+# The rules (rr_metrics.py, settings.json) live ONLY in rapidhsg/rr-metrics-data. Never copy them here.
+# Set RR_METRICS_RULES to that repo's rules/ folder; default: a rr-metrics-data clone next to this repo.
+import os
+RULES_DIR = Path(os.environ.get("RR_METRICS_RULES") or (HERE.parent / "rr-metrics-data" / "rules"))
+if not (RULES_DIR / "rr_metrics.py").exists():
+    sys.exit(f"Can't find the rr-metrics rules at {RULES_DIR}. Clone rapidhsg/rr-metrics-data next to this repo or set RR_METRICS_RULES.")
+sys.path.insert(0, str(RULES_DIR))
 import rr_metrics as rr  # certified loader and close rate rules
 
 CFG = json.loads((HERE / "settings.json").read_text())

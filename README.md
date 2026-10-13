@@ -1,12 +1,17 @@
 # Sales board engine
 
+**Where things live:** this repo is the sales board and assignment engine only. The data (AccuLynx job export, `data` branch)
+and every metric rule (`rules/rr_metrics.py`, `rules/settings.json`) live in **rapidhsg/rr-metrics-data**. This repo reads
+them and never copies or changes them. Clone rr-metrics-data next to this repo (or set `RR_METRICS_RULES`) before a run.
+Moved out of rr-metrics-data on 2026-10-13 with its full history.
+
 Rates every upcoming appointment for every rep, so the sales board can recommend who should run each sit.
 The goal is higher close rates and more same-day closes. The engine learns from results and corrects itself.
 
 ## Where the data comes from
 
-Only the live AccuLynx job export on this repo's `data` branch (`data/job_export_raw_latest.csv`), loaded through the
-certified rules code in `rules/rr_metrics.py`. The engine learns from demos and whether each one signed (Demo Conversion); rep cards, ratings and hot hand use Close Rate (approvals in the period / demos in the period). Only the last
+Only the live AccuLynx job export on rr-metrics-data's `data` branch (`data/job_export_raw_latest.csv`), loaded through the
+certified rules code in rr-metrics-data's `rules/rr_metrics.py`. The engine learns from demos and whether each one signed (Demo Conversion); rep cards, ratings and hot hand use Close Rate (approvals in the period / demos in the period). Only the last
 395 days are used (`data_window_days` in settings.json), because older data is not reliable.
 
 ## What it predicts

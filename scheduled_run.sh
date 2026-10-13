@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # One full engine run, used by the scheduled task. Stops at the first failure.
+# Needs the rr-metrics rules: a clone of rapidhsg/rr-metrics-data next to this repo, or RR_METRICS_RULES=<its rules/ folder>.
 # Usage: bash scheduled_run.sh <data dir with job_export_raw_latest.csv and status.json> <board export dir with roster/ and cards/> <out dir> [weekly]
 #   board export dir: one JSON file per board database doc (roster/<slug>.json, cards/<guid>.json), each the doc's data.
 #   weekly: also run the self-test and the assignment experiment review (learn.py).
@@ -19,5 +20,5 @@ if [ "$WEEKLY" = "weekly" ]; then
   python selftest.py "$CSV"
   python learn.py
 fi
-find .. -name __pycache__ -not -path "../.git/*" -exec rm -rf {} + 2>/dev/null || true
+find . -name __pycache__ -not -path "./.git/*" -exec rm -rf {} + 2>/dev/null || true
 echo "scheduled run OK"
