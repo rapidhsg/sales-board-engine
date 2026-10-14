@@ -15,6 +15,7 @@ python outcomes.py --save-board "$EXPORT/cards"
 python run.py "$CSV" "$OUT"
 python board.py "$OUT" "$CSV" "$DATA/status.json"
 python tests/test_rules.py "$CSV" "$OUT"
+python tests/check_page.py   # never publish a page that can't load
 python outcomes.py "$CSV"
 if [ "$WEEKLY" = "weekly" ]; then
   python selftest.py "$CSV"
