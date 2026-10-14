@@ -217,3 +217,47 @@ run_date,guid,appt,rep,close,same_day,bends,arm
 2026-10-13,14bcc08e-92f6-46b6-ae45-90cb5a378a3c,2026-10-13T14:00,Michael Dietrich,0.295,0.112,,champion
 2026-10-13,a5b62da3-9e5b-4971-baab-971dcc67ec06,2026-10-13T14:00,Joseph Young,0.148,0.045,,champion
 2026-10-13,71dcde14-8fcd-4672-8eb6-4ef62587ade1,2026-10-13T12:00,Steve Burns,0.169,0.069,,champion
+2026-10-14,fca26e67-f419-4e44-9750-20a71099c713,2026-10-14T09:00,Michael Dietrich,0.0,0.0,,challenger
+2026-10-14,9b62e56a-fd9a-470b-8b06-62e96b9b6a69,2026-10-15T12:00,Francesco Ambrosio,0.0,0.0,,champion
+2026-10-14,70df1c55-c560-47bf-81de-2ab3e4049452,2026-10-24T10:00,Michael Dietrich,0.418,0.168,,challenger
+2026-10-14,3f2b1223-e3c2-4ecc-b27b-fa285204d7c7,2026-10-19T12:00,Michael Dietrich,0.391,0.173,,champion
+2026-10-14,4c646402-8255-405f-a914-eccf12e46270,2026-10-17T08:00,,,,,champion
+2026-10-14,fb25d8f7-b110-4b76-ae4a-9a2fed5b5600,2026-10-16T12:00,Querlim Franco,0.314,0.101,,challenger
+2026-10-14,cd59d966-69d5-4580-bacf-f7d83b102b1f,2026-10-18T12:00,Michael Dietrich,0.222,0.071,over weekly cap (nobody else free),challenger
+2026-10-14,7df0ace8-7950-4ab8-9f99-a8e1eb0f5ff5,2026-10-17T14:00,Michael Dietrich,0.356,0.114,,champion
+2026-10-14,8a2c56b8-edd5-4717-90a2-883d58a8c53c,2026-10-15T18:00,Joseph Young,0.0,0.0,,champion
+2026-10-14,9c508ecc-e0b2-43eb-a818-8a6c2d35695e,2026-10-16T14:00,Steve Burns,0.262,0.095,,challenger
+2026-10-14,cb41e905-533d-4b55-9663-db91ec8c03c6,2026-10-15T10:00,Querlim Franco,0.318,0.123,,champion
+2026-10-14,eedb78ac-63bb-4f5d-85a1-3a485d887760,2026-10-15T10:00,Michael Dietrich,0.632,0.28,,champion
+2026-10-14,0b152715-f6a7-484b-8422-ba41354af704,2026-10-19T16:00,Michael Dietrich,0.21,0.068,,champion
+2026-10-14,12086745-8af7-4d80-8ae8-d766b78eec03,2026-10-15T14:00,Francesco Ambrosio,0.563,0.316,,champion
+2026-10-14,f3a66308-61a4-4370-a206-dca07822c381,2026-10-16T12:00,Francesco Ambrosio,0.292,0.194,,challenger
+2026-10-14,286b0e24-05f9-4956-8c51-51d63db3b806,2026-10-15T18:00,Michael Dietrich,0.416,0.145,,champion
+2026-10-14,a248517f-c500-4aef-a92f-40c3b47736b8,2026-10-15T10:00,Francesco Ambrosio,0.511,0.282,,champion
+2026-10-14,211c015d-a3ff-4af8-ab23-223cbed2731b,2026-10-17T10:00,Steve Burns,0.095,0.052,over weekly cap (nobody else free); last resort for a New rep,champion
+2026-10-14,579431b2-4f5d-424f-975e-958864a5d3f0,2026-10-16T18:00,Querlim Franco,0.38,0.134,,challenger
+2026-10-14,d8f8898f-59d5-4410-b8ed-f72d7529a601,2026-10-14T12:00,Joseph Young,0.19,0.069,,challenger
+2026-10-14,73032eb3-6cfe-4de7-ae8f-0ae83552866c,2026-10-14T12:00,Querlim Franco,0.359,0.192,,challenger
+2026-10-14,4f9917cc-3e18-4d93-bb27-2b57417b2399,2026-10-14T14:00,Francesco Ambrosio,0.396,0.215,,challenger
+2026-10-14,8f616b29-8579-43ef-a461-9b31d354e4b4,2026-10-14T14:00,Joseph Young,0.171,0.042,,challenger
+2026-10-14,250ca05c-7a6e-42c1-aac8-5aa625e720b3,2026-10-14T16:00,Michael Dietrich,0.302,0.093,,challenger
+2026-10-14,9bbb5b98-e81c-4676-b296-6901fad80a07,2026-10-14T16:00,Joseph Young,0.219,0.068,,challenger
+2026-10-14,7f4e3522-b6a8-421d-a508-da0c094e2a05,2026-10-14T10:00,Querlim Franco,0.372,0.141,,challenger
+2026-10-14,20b62fdb-3a3d-402a-a84b-ebe58e2ea16f,2026-10-14T18:00,Joseph Young,0.267,0.076,,challenger
+2026-10-14,1373fb9f-b5b9-40fe-b81a-79845168c79f,2026-10-14T11:00,Michael Dietrich,0.331,0.157,,challenger
+2026-10-14,a9633c36-d7e3-4a81-839b-23e9e141d764,2026-10-16T12:00,Michael Dietrich,0.474,0.12,,challenger
+2026-10-14,a6f518bb-bd9c-4cbb-a216-fb271add491b,2026-10-14T12:00,Francesco Ambrosio,0.356,0.199,,challenger
+2026-10-14,21419b76-5072-4a4a-8fc3-263b7131b67f,2026-10-17T12:00,Joseph Young,0.233,0.081,,champion
+2026-10-14,667c5020-c922-4c39-ae0d-fa4d9a683ee4,2026-10-14T10:00,Steve Burns,0.209,0.1,,challenger
+2026-10-14,e9ba33ec-665c-407c-bc8b-d486a21cd029,2026-10-14T16:00,Steve Burns,0.322,0.134,,challenger
+2026-10-14,75355945-e224-4282-9c11-634282fa33ea,2026-10-14T14:00,Steve Burns,0.287,0.11,,challenger
+2026-10-14,5f05f555-168d-4a35-a540-91194ebd9450,2026-10-14T10:00,Francesco Ambrosio,0.559,0.337,,challenger
+2026-10-14,e3babd87-4672-4d1c-8270-0f4c9c7eb694,2026-10-15T10:00,Joseph Young,0.225,0.073,over weekly cap (nobody else free); last resort for a Coaching rep,champion
+2026-10-14,2833d898-d6da-4040-b182-a6d956326eb5,2026-10-20T12:00,Michael Dietrich,0.585,0.167,,challenger
+2026-10-14,a5da4d4c-9fe3-4a5e-928c-b8ee5346c8bd,2026-10-15T16:00,Michael Dietrich,0.523,0.257,,champion
+2026-10-14,7b8c3d39-26e0-43bc-842f-8ab1e10daec7,2026-10-17T10:00,Querlim Franco,0.333,0.122,over weekly cap (nobody else free),champion
+2026-10-14,6d7660e8-ba69-457e-808a-176f6954168b,2026-10-15T12:00,Steve Burns,0.275,0.08,,champion
+2026-10-14,250f519c-322c-43e0-bcbb-189c9e4e8d70,2026-10-17T12:00,Michael Dietrich,0.516,0.156,,champion
+2026-10-14,5f5ea99f-997f-433c-a0b3-a731183f7f5c,2026-10-21T12:00,Francesco Ambrosio,0.316,0.19,,champion
+2026-10-14,0f1e34ed-00a2-4434-b009-d018330b3b47,2026-10-15T12:00,Querlim Franco,0.317,0.102,,champion
+2026-10-14,3b9914a0-4914-4fb3-bba7-50144b14ad8f,2026-10-15T14:00,Querlim Franco,0.365,0.136,,champion
